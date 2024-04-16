@@ -7,7 +7,7 @@
 > Long answer: It depends. It works fine for me and I prefer it over other solutions, but it might not for you. Its also not optimized, so you might run into issues regarding memory leaks or performance in general.
 
 ## Examples:
-See [Examples](https://github.com/byBackfish/FishORM/src/main/java/example/)
+See [Examples](https://github.com/byBackfish/FishORM/tree/main/src/main/java/example)
 
 ## Installation:
 
