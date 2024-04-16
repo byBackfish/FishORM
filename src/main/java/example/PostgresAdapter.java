@@ -14,7 +14,7 @@ public class PostgresAdapter implements DatabaseAdapter {
     public void connect(DatabaseOptions databaseOptions) throws ClassNotFoundException, SQLException {
         Class.forName("org.postgresql.Driver");
 
-        String jdbcUrl = "jdbc:postgresql://" + databaseOptions.host() + ":" + databaseOptions.port() + "/" + databaseOptions.database();
+        String jdbcUrl = STR."jdbc:postgresql://\{databaseOptions.host()}:\{databaseOptions.port()}/\{databaseOptions.database()}";
         connection = DriverManager.getConnection(jdbcUrl, databaseOptions.username(), databaseOptions.password());
     }
 

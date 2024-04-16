@@ -20,6 +20,11 @@ public class Update {
                 )
         );
 
+        /* Or alternatively, using the static method ById
+        * FishDatabase.SelectOptions selectOptions = new FishDatabase.SelectOptions("*")
+        *        .withFilter(FishDatabase.FilterOptions.ById(5));
+        */
+
         Employee.findOne(Employee.class, selectOptions).ifPresent(employee -> {
             employee.name = "John Doe";
             try {
