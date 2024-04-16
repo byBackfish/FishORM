@@ -14,13 +14,13 @@ See [Examples](https://github.com/byBackfish/FishORM/src/main/java/example/)
 ### Gradle:
 ```gradle
 // Add jitpack as the repository:
-  repositories {
-			maven { url 'https://jitpack.io' }
-  }
+	repositories {
+		maven { url 'https://jitpack.io' }
+	}
 
 // Add FishORM as a dependency
-  dependencies {
-      implementation 'com.github.byBackfish:FishORM:-SNAPSHOT'
+	dependencies {
+      		implementation 'com.github.byBackfish:FishORM:-SNAPSHOT'
 	}
 ```
 
