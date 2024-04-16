@@ -10,9 +10,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.List;
 
-public class InnerJoin {
+public class Join {
 
-    public static void main(String[] args) throws SQLException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    public static void main() throws SQLException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
         fishDatabase.connect(new DatabaseOptions("localhost", 5432, "postgres", "user", "password"));
 

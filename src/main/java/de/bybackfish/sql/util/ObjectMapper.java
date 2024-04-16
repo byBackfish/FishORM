@@ -21,7 +21,7 @@ public class ObjectMapper {
         while (resultSet.next()) {
             clazz.getDeclaredConstructor().setAccessible(true);
             T obj = (T) clazz.getDeclaredConstructor().newInstance();
-            Map<String, Object> map = new HashMap<>();
+
             for (Field field : clazz.getDeclaredFields()) {
                 field.setAccessible(true);
                 boolean isFieldOptional = field.getType().equals(Optional.class);

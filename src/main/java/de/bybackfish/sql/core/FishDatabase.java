@@ -8,6 +8,7 @@ import de.bybackfish.sql.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,12 +32,10 @@ public class FishDatabase {
         databaseAdapter.connect(databaseOptions);
     }
 
-    public <T extends DatabaseModel<T>> List<T> executeQuery(String sql, Class<T> clazz, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public <T extends DatabaseModel> List<T> executeQuery(String sql, Class<T> clazz, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
         ObjectMapper mapper = new ObjectMapper(clazz);
 
-        try (PreparedStatement statement = prepareStatement(sql, params)) {
-            ResultSet resultSet = statement.executeQuery();
-
+        try (ResultSet resultSet = nativeQuery(sql, params)) {
             return mapper.map(resultSet);
         }
     }
@@ -48,9 +47,8 @@ public class FishDatabase {
     }
 
     public ResultSet nativeQuery(String sql, Object... params) throws SQLException {
-        try (PreparedStatement statement = prepareStatement(sql, params)) {
-            return statement.executeQuery();
-        }
+        PreparedStatement statement = prepareStatement(sql, params);
+        return statement.executeQuery();
     }
 
     private PreparedStatement prepareStatement(String sql, Object... params) throws SQLException {
@@ -70,17 +68,18 @@ public class FishDatabase {
                     """.formatted(sql, requiredParams, params.length));
         }
 
-        PreparedStatement statement = databaseAdapter.getConnection().prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        Connection connection = databaseAdapter.getConnection();
+        PreparedStatement preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         for (int i = 0; i < params.length; i++) {
-            statement.setObject(i + 1, params[i]);
+            preparedStatement.setObject(i + 1, params[i]);
         }
 
-        debug("Prepared Statement: {0}\n", statement.toString());
+        debug("Prepared Statement: {0}\n", preparedStatement.toString());
 
-        return statement;
+        return preparedStatement;
     }
 
-    public <T extends DatabaseModel<T>> List<T> select(SelectOptions options, Class<T> clazz, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public <T extends DatabaseModel> List<T> select(SelectOptions options, Class<T> clazz, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
         String tableName;
 
         try {
@@ -89,7 +88,7 @@ public class FishDatabase {
             tableName = clazz.getSimpleName();
         }
 
-        String sql = "select " + options.what + " from " + tableName + " where " + options.conditions.filter;
+        String sql = STR."select \{options.what} from \{tableName} where \{options.conditions.filter}";
         List<Object> finalParameters = new ArrayList<>();
         finalParameters.addAll(Arrays.asList(options.conditions.params));
         finalParameters.addAll(Arrays.asList(params));
@@ -98,7 +97,7 @@ public class FishDatabase {
     }
 
     // "innerJoin", that returns JointPair<T, U> where T is subclass of DatabaseModel and U is subclass of DatabaseModel
-    public <T extends DatabaseModel<T>, U extends DatabaseModel<U>> List<JointPair<T, U>> join(SelectOptions options, Class<T> clazz, Class<U> clazz2, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public <T extends DatabaseModel, U extends DatabaseModel> List<JointPair<T, U>> join(SelectOptions options, Class<T> clazz, Class<U> clazz2, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
         String firstTableName;
 
         try {
@@ -117,7 +116,7 @@ public class FishDatabase {
         String finalSecondTableName = secondTableName;
         Map.Entry<Field, ForeignKey> foreignKey = ReflectionUtils.getAnnotatedFields(clazz, ForeignKey.class)
                 .entrySet().stream().filter(entry -> entry.getValue().targetTable().equals(finalSecondTableName))
-                .findFirst().orElseThrow(() -> new RuntimeException("No foreign key found for " + clazz.getSimpleName()));
+                .findFirst().orElseThrow(() -> new RuntimeException(STR."No foreign key found for \{clazz.getSimpleName()}"));
 
         String foreignKeyColumnName;
         try {
@@ -153,7 +152,7 @@ public class FishDatabase {
 
         // should be same length
         if (firstTable.size() != secondTable.size()) {
-            throw new RuntimeException("Length of first and second table are not the same: " + firstTable.size() + " and " + secondTable.size());
+            throw new RuntimeException(STR."Length of first and second table are not the same: \{firstTable.size()} and \{secondTable.size()}");
         }
 
         // join together with stream
@@ -196,7 +195,7 @@ public class FishDatabase {
         }
 
         public static FilterOptions FilterBy(String key, Object value) {
-            return new FilterOptions(key + " = ?", value);
+            return new FilterOptions(STR."\{key} = ?", value);
         }
 
     }
