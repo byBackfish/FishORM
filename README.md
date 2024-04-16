@@ -2,7 +2,6 @@
 
 ## Should I use this? 
 > Short answer: No. 
-<br>
 > Long answer: It depends. It works fine for me and I prefer it over other solutions, but it might not for you. Its also not optimized, so you might run into issues regarding memory leaks or performance in general.
 
 ## Examples:
