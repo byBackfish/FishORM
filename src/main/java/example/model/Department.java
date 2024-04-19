@@ -11,7 +11,6 @@ public class Department extends DatabaseModel {
     /**
      * @see Employee for more information
      */
-
     @PrimaryKey
     int id;
 

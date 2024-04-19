@@ -1,5 +1,7 @@
 package de.bybackfish.sql.util;
 
+import de.bybackfish.sql.annotation.Table;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -20,5 +22,29 @@ public class ReflectionUtils {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public static <T extends Annotation> T getAnnotationFromClass(Class<?> clazz, Class<T> annotationClass) {
+        try {
+            return clazz.getAnnotation(annotationClass);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String getTableName(Class<?> clazz) {
+        try {
+            return getAnnotationFromClass(clazz, Table.class).value();
+        } catch (Exception ignored) {
+            return clazz.getSimpleName();
+        }
+    }
+
+    public static String getFieldName(java.lang.reflect.Field field) {
+        try {
+            return getAnnotationFromField(field, de.bybackfish.sql.annotation.Field.class).value();
+        } catch (Exception ignored) {
+        }
+        return field.getName();
     }
 }

@@ -10,7 +10,7 @@ public class Insert {
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException, IllegalAccessException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
-        fishDatabase.connect(new DatabaseOptions("localhost", 5432, "postgres", "user", "password"));
+        fishDatabase.connect(new DatabaseOptions("localhost", 5432, "postgres", "prj1_user", "prj1_password"));
 
         Employee employee = new Employee();
         employee.name = "Maik";
