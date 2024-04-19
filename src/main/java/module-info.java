@@ -1,4 +1,4 @@
-module FishDatabaseLib {
+module de.bybackfish.fishorm {
     requires java.logging;
     requires java.sql;
 
