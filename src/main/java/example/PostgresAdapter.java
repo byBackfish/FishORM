@@ -24,8 +24,12 @@ public class PostgresAdapter implements DatabaseAdapter {
     }
 
     @Override
-    public void disconnect() throws SQLException {
-        connection.close();
+    public void disconnect() throws FishSQLException {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Connection getConnection() {

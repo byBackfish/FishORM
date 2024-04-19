@@ -6,7 +6,7 @@ import java.sql.SQLException;
 public interface DatabaseAdapter {
     void connect(DatabaseOptions databaseOptions) throws ClassNotFoundException, FishSQLException;
 
-    void disconnect() throws SQLException;
+    void disconnect() throws FishSQLException;
 
-    Connection getConnection() throws SQLException;
+    Connection getConnection() throws FishSQLException;
 }
