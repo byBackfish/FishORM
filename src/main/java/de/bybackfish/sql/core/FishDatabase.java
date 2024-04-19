@@ -64,7 +64,7 @@ public class FishDatabase {
         }
 
         Connection connection = databaseAdapter.getConnection();
-        PreparedStatement preparedStatement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        PreparedStatement preparedStatement = connection.prepareStatement(STR."\{sql}", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         for (int i = 0; i < params.length; i++) {
             preparedStatement.setObject(i + 1, params[i]);
         }
