@@ -82,6 +82,37 @@ public class DatabaseModel {
         DatabaseProvider.getDatabase().executeUpdate(insertQueryBuilder);
     }
 
+    public void delete() throws FishSQLException {
+        FishDatabase fishDatabase = DatabaseProvider.getDatabase();
+
+        String tableName = getTableName(this.getClass());
+
+        DeleteQueryBuilder deleteQueryBuilder = new DeleteQueryBuilder(tableName);
+
+        for (java.lang.reflect.Field field : this.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            String fieldName = getFieldName(field);
+            Object value;
+            try {
+                value = field.get(this);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            if (value instanceof Optional<?>) {
+                value = ((Optional<?>) value).orElse(null);
+            }
+            if (value == null) {
+                continue;
+            }
+            Object finalValue = value;
+            deleteQueryBuilder.where(where ->
+                    where.and(STR."{tableName}.{fieldName} = ?", finalValue)
+            );
+        }
+
+        fishDatabase.executeUpdate(deleteQueryBuilder);
+    }
+
     public void update() throws FishSQLException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
 
