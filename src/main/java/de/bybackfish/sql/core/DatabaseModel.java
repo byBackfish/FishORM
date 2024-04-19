@@ -138,17 +138,32 @@ public class DatabaseModel {
     protected WhereQueryBuilder getDistinctWhereClause() {
         Collection<java.lang.reflect.Field> primaryKeyFields = getPrimaryKeyFields();
 
-        if (primaryKeyFields.isEmpty()) {
-            return new WhereQueryBuilder().and("true");
-        }
-
         WhereQueryBuilder whereQueryBuilder = new WhereQueryBuilder();
 
-        for (java.lang.reflect.Field field : primaryKeyFields) {
-            try {
-                whereQueryBuilder.and(STR."\{getTableName(this.getClass())}.\{getFieldName(field)} = ?", field.get(this));
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
+        if (primaryKeyFields.isEmpty()) {
+            for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+
+                String name = getFieldName(field);
+                Object value = null;
+                try {
+                    value = field.get(this);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (value == null) {
+                    continue;
+                }
+                whereQueryBuilder.and(STR."\{getTableName(this.getClass())}.\{name} = ?", value);
+            }
+        } else {
+            for (java.lang.reflect.Field field : primaryKeyFields) {
+                try {
+                    whereQueryBuilder.and(STR."\{getTableName(this.getClass())}.\{getFieldName(field)} = ?", field.get(this));
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
