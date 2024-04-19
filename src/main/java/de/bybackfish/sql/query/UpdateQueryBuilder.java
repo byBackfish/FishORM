@@ -14,7 +14,7 @@ public class UpdateQueryBuilder extends AbstractQueryBuilder {
             sql(",", Integer.MAX_VALUE - 1);
         } else {
             isSet = true;
-            sql(STR."SET", Integer.MAX_VALUE - 1);
+            sql("SET", Integer.MAX_VALUE - 1);
         }
         sql(STR."\{columnName} = ?", Integer.MAX_VALUE - 1, value);
         isSet = true;

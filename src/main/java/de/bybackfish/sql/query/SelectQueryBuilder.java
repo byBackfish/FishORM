@@ -6,7 +6,6 @@ import de.bybackfish.sql.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class SelectQueryBuilder extends AbstractQueryBuilder {
 

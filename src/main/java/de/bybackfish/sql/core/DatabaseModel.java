@@ -10,7 +10,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.bybackfish.sql.util.ReflectionUtils.*;
+import static de.bybackfish.sql.util.ReflectionUtils.getFieldName;
+import static de.bybackfish.sql.util.ReflectionUtils.getTableName;
 
 public class DatabaseModel {
     public static <T extends DatabaseModel> List<T> findMany(Class<T> clazz, SelectQueryBuilder queryBuilder) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {

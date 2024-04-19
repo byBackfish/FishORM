@@ -4,11 +4,9 @@ import de.bybackfish.sql.core.DatabaseOptions;
 import de.bybackfish.sql.core.DatabaseProvider;
 import de.bybackfish.sql.core.FishDatabase;
 import de.bybackfish.sql.query.QueryBuilder;
-import de.bybackfish.sql.query.SelectQueryBuilder;
 import de.bybackfish.sql.util.JointClasses;
 import example.model.Department;
 import example.model.Employee;
-import org.postgresql.core.Query;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
