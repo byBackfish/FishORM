@@ -1,8 +1,10 @@
 package de.bybackfish.sql.query;
 
 import de.bybackfish.sql.core.DatabaseOptions;
+import de.bybackfish.sql.core.DatabaseProvider;
+import de.bybackfish.sql.core.FishDatabase;
 import de.bybackfish.sql.util.JointClasses;
-import example.DatabaseProvider;
+import example.PostgresAdapter;
 import example.model.Department;
 import example.model.Employee;
 
@@ -12,7 +14,10 @@ import java.sql.SQLException;
 public class Test {
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
-        DatabaseProvider.getDatabase().connect(
+        DatabaseProvider.setup(new PostgresAdapter());
+        FishDatabase fishDatabase = DatabaseProvider.getDatabase();
+
+        fishDatabase.connect(
                 new DatabaseOptions("localhost", 5432, "postgres", "prj1_user", "prj1_password")
         );
 

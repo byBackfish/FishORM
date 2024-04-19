@@ -7,6 +7,5 @@ module FishDatabaseLib {
     exports de.bybackfish.sql.annotation;
     exports de.bybackfish.sql.core;
     exports de.bybackfish.sql.util;
-    exports example;
     exports de.bybackfish.sql.query;
 }

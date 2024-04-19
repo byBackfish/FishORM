@@ -1,6 +1,7 @@
 package example;
 
 import de.bybackfish.sql.core.DatabaseOptions;
+import de.bybackfish.sql.core.DatabaseProvider;
 import de.bybackfish.sql.core.FishDatabase;
 import de.bybackfish.sql.query.QueryBuilder;
 import de.bybackfish.sql.query.SelectQueryBuilder;
@@ -17,7 +18,9 @@ import java.util.List;
 public class Join {
 
     public static void main() throws SQLException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+        DatabaseProvider.setup(new PostgresAdapter());
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
+
         fishDatabase.connect(new DatabaseOptions("localhost", 5432, "postgres", "prj1_user", "prj1_password"));
 
 

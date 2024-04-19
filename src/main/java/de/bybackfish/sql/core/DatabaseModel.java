@@ -2,10 +2,8 @@ package de.bybackfish.sql.core;
 
 import de.bybackfish.sql.annotation.ForeignKey;
 import de.bybackfish.sql.annotation.PrimaryKey;
-import de.bybackfish.sql.annotation.Table;
 import de.bybackfish.sql.query.*;
 import de.bybackfish.sql.util.ReflectionUtils;
-import example.DatabaseProvider;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
