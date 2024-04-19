@@ -89,26 +89,8 @@ public class DatabaseModel {
 
         DeleteQueryBuilder deleteQueryBuilder = new DeleteQueryBuilder(tableName);
 
-        for (java.lang.reflect.Field field : this.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            String fieldName = getFieldName(field);
-            Object value;
-            try {
-                value = field.get(this);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-            if (value instanceof Optional<?>) {
-                value = ((Optional<?>) value).orElse(null);
-            }
-            if (value == null) {
-                continue;
-            }
-            Object finalValue = value;
-            deleteQueryBuilder.where(where ->
-                    where.and(STR."{tableName}.{fieldName} = ?", finalValue)
-            );
-        }
+        WhereQueryBuilder whereQueryBuilder = getDistinctWhereClause();
+        deleteQueryBuilder.where(whereQueryBuilder);
 
         fishDatabase.executeUpdate(deleteQueryBuilder);
     }

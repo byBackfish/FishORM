@@ -26,7 +26,7 @@ See [Examples](https://github.com/byBackfish/FishORM/tree/main/src/main/java/exa
 
 ### Maven:
 
-```maven
+```xml
 	<repositories>
 		<repository>
 		    <id>jitpack.io</id>
