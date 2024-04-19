@@ -6,7 +6,6 @@ import de.bybackfish.sql.query.*;
 import de.bybackfish.sql.util.ReflectionUtils;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,13 +13,13 @@ import static de.bybackfish.sql.util.ReflectionUtils.getFieldName;
 import static de.bybackfish.sql.util.ReflectionUtils.getTableName;
 
 public class DatabaseModel {
-    public static <T extends DatabaseModel> List<T> findMany(Class<T> clazz, SelectQueryBuilder queryBuilder) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public static <T extends DatabaseModel> List<T> findMany(Class<T> clazz, SelectQueryBuilder queryBuilder) throws FishSQLException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
 
         return fishDatabase.select(queryBuilder, clazz);
     }
 
-    public static <T extends DatabaseModel> Optional<T> findOne(Class<T> clazz, SelectQueryBuilder queryBuilder) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public static <T extends DatabaseModel> Optional<T> findOne(Class<T> clazz, SelectQueryBuilder queryBuilder) throws FishSQLException{
         queryBuilder.limit(1);
         List<T> models = findMany(clazz, queryBuilder);
         if (models.isEmpty()) {
@@ -29,11 +28,11 @@ public class DatabaseModel {
         return Optional.of(models.getFirst());
     }
 
-    public static <T extends DatabaseModel> List<T> all(Class<T> clazz) throws SQLException, InstantiationException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+    public static <T extends DatabaseModel> List<T> all(Class<T> clazz) throws FishSQLException {
         return findMany(clazz, QueryBuilder.select("*"));
     }
 
-    public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz) throws FishSQLException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
 
         String thisName = getTableName(this.getClass());
@@ -56,30 +55,34 @@ public class DatabaseModel {
         return fishDatabase.executeQuery(selectQueryBuilder, clazz);
     }
 
-    public <T extends DatabaseModel> T linkOne(Class<T> clazz) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    public <T extends DatabaseModel> T linkOne(Class<T> clazz) throws FishSQLException {
         return linkMany(clazz).getFirst();
     }
 
-    public void insert() throws SQLException, IllegalAccessException {
+    public void insert() throws FishSQLException {
         InsertQueryBuilder insertQueryBuilder = new InsertQueryBuilder(getTableName(this.getClass()));
 
-        for (java.lang.reflect.Field field : this.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            String fieldName = getFieldName(field);
-            Object value = field.get(this);
-            if (value instanceof Optional<?>) {
-                value = ((Optional<?>) value).orElse(null);
+        try {
+            for (java.lang.reflect.Field field : this.getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+                String fieldName = getFieldName(field);
+                Object value = field.get(this);
+                if (value instanceof Optional<?>) {
+                    value = ((Optional<?>) value).orElse(null);
+                }
+                if (value == null) {
+                    continue;
+                }
+                insertQueryBuilder.add(fieldName, value);
             }
-            if (value == null) {
-                continue;
-            }
-            insertQueryBuilder.add(fieldName, value);
+        } catch (IllegalAccessException e) {
+            throw new FishSQLException(e);
         }
 
         DatabaseProvider.getDatabase().executeUpdate(insertQueryBuilder);
     }
 
-    public void update() throws SQLException, IllegalAccessException {
+    public void update() throws FishSQLException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
 
         String tableName = getTableName(this.getClass());
@@ -91,7 +94,12 @@ public class DatabaseModel {
         for (java.lang.reflect.Field field : this.getClass().getDeclaredFields()) {
             field.setAccessible(true);
             String fieldName = getFieldName(field);
-            Object value = field.get(this);
+            Object value;
+            try {
+                value = field.get(this);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
             if (value instanceof Optional<?>) {
                 value = ((Optional<?>) value).orElse(null);
             }
@@ -114,7 +122,7 @@ public class DatabaseModel {
         return ReflectionUtils.getAnnotatedFields(this.getClass(), PrimaryKey.class).keySet();
     }
 
-    protected WhereQueryBuilder getDistinctWhereClause() throws IllegalAccessException {
+    protected WhereQueryBuilder getDistinctWhereClause() {
         Collection<java.lang.reflect.Field> primaryKeyFields = getPrimaryKeyFields();
 
         if (primaryKeyFields.isEmpty()) {
@@ -124,7 +132,11 @@ public class DatabaseModel {
         WhereQueryBuilder whereQueryBuilder = new WhereQueryBuilder();
 
         for (java.lang.reflect.Field field : primaryKeyFields) {
-            whereQueryBuilder.and(STR."\{getTableName(this.getClass())}.\{getFieldName(field)} = ?", field.get(this));
+            try {
+                whereQueryBuilder.and(STR."\{getTableName(this.getClass())}.\{getFieldName(field)} = ?", field.get(this));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         return whereQueryBuilder;

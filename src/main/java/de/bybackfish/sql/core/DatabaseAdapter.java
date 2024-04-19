@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public interface DatabaseAdapter {
-    void connect(DatabaseOptions databaseOptions) throws ClassNotFoundException, SQLException;
+    void connect(DatabaseOptions databaseOptions) throws ClassNotFoundException, FishSQLException;
 
     void disconnect() throws SQLException;
 

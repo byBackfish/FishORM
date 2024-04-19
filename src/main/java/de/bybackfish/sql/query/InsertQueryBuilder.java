@@ -1,6 +1,7 @@
 package de.bybackfish.sql.query;
 
 import de.bybackfish.sql.core.FishDatabase;
+import de.bybackfish.sql.core.FishSQLException;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -20,7 +21,7 @@ public class InsertQueryBuilder extends AbstractQueryBuilder {
     }
 
     @Override
-    public BuiltQuery build(FishDatabase fishDatabase) throws SQLException {
+    public BuiltQuery build(FishDatabase fishDatabase) throws FishSQLException {
 
         // add the nodes
         // first the names of the columns

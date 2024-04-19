@@ -3,6 +3,7 @@ package example;
 import de.bybackfish.sql.core.DatabaseOptions;
 import de.bybackfish.sql.core.DatabaseProvider;
 import de.bybackfish.sql.core.FishDatabase;
+import de.bybackfish.sql.core.FishSQLException;
 import de.bybackfish.sql.query.AbstractQueryBuilder;
 import de.bybackfish.sql.query.QueryBuilder;
 import de.bybackfish.sql.query.SelectQueryBuilder;
@@ -34,7 +35,7 @@ public class Update {
             employee.name = "John Doe";
             try {
                 employee.update();
-            } catch (SQLException | IllegalAccessException e) {
+            } catch (FishSQLException e) {
                 throw new RuntimeException(e);
             }
         });

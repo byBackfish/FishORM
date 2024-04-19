@@ -2,6 +2,7 @@ package de.bybackfish.sql.query;
 
 import de.bybackfish.sql.core.DatabaseModel;
 import de.bybackfish.sql.core.FishDatabase;
+import de.bybackfish.sql.core.FishSQLException;
 import de.bybackfish.sql.util.JointClasses;
 import de.bybackfish.sql.util.ObjectMapper;
 
@@ -51,12 +52,16 @@ public class AbstractQueryBuilder {
         return this;
     }
 
-    public BuiltQuery build(FishDatabase fishDatabase) throws SQLException {
+    public BuiltQuery build(FishDatabase fishDatabase) throws FishSQLException {
         List<QueryNode> sorted = nodes.stream().sorted(Comparator.comparingInt(QueryNode::priority).reversed()).toList();
         String buildSql = sorted.stream().map(QueryNode::sql).collect(Collectors.joining(" "));
         Object[] params = sorted.stream().map(QueryNode::params).flatMap(Arrays::stream).toArray();
 
-        return new BuiltQuery(fishDatabase.prepareStatement(buildSql, params));
+        try {
+            return new BuiltQuery(fishDatabase.prepareStatement(buildSql, params));
+        } catch (SQLException e) {
+            throw new FishSQLException(e);
+        }
     }
 
     public enum OrderDirection {
@@ -72,27 +77,39 @@ public class AbstractQueryBuilder {
     }
 
     public record BuiltQuery(PreparedStatement statement) {
-        public ResultSet execute() throws SQLException {
-            return statement.executeQuery();
+        public ResultSet execute() throws FishSQLException {
+            try {
+                return statement.executeQuery();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
         }
 
-        public void executeUpdate() throws SQLException {
-            statement.executeUpdate();
+        public void executeUpdate() throws FishSQLException {
+            try {
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
         }
 
-        public <T extends DatabaseModel> List<T> unwrap(Class<T> clazz) throws SQLException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+        public <T extends DatabaseModel> List<T> unwrap(Class<T> clazz) throws FishSQLException {
             ObjectMapper mapper = new ObjectMapper(clazz);
             return mapper.map(execute());
         }
 
-        public <T extends DatabaseModel, U extends DatabaseModel> List<JointClasses.JointPair<T, U>> unwrap(Class<T> clazz1, Class<U> clazz2) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+        public <T extends DatabaseModel, U extends DatabaseModel> List<JointClasses.JointPair<T, U>> unwrap(Class<T> clazz1, Class<U> clazz2) throws FishSQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
 
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {
@@ -107,7 +124,7 @@ public class AbstractQueryBuilder {
             return jointPairs;
         }
 
-        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel> List<JointClasses.JointTriple<T, U, V>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel> List<JointClasses.JointTriple<T, U, V>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3) throws FishSQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
             ObjectMapper third = new ObjectMapper(clazz3);
@@ -115,9 +132,17 @@ public class AbstractQueryBuilder {
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+                try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<V> thirdTable = third.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {
@@ -135,7 +160,7 @@ public class AbstractQueryBuilder {
             return jointTriples;
         }
 
-        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel> List<JointClasses.JointQuad<T, U, V, W>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel> List<JointClasses.JointQuad<T, U, V, W>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4) throws SQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
             ObjectMapper third = new ObjectMapper(clazz3);
@@ -144,11 +169,23 @@ public class AbstractQueryBuilder {
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<V> thirdTable = third.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<W> fourthTable = fourth.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {
@@ -169,7 +206,7 @@ public class AbstractQueryBuilder {
             return jointQuads;
         }
 
-        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel, X extends DatabaseModel> List<JointClasses.JointQuint<T, U, V, W, X>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel, X extends DatabaseModel> List<JointClasses.JointQuint<T, U, V, W, X>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5) throws SQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
             ObjectMapper third = new ObjectMapper(clazz3);
@@ -179,13 +216,29 @@ public class AbstractQueryBuilder {
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<V> thirdTable = third.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<W> fourthTable = fourth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<X> fifthTable = fifth.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {
@@ -210,7 +263,7 @@ public class AbstractQueryBuilder {
         }
 
         public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel, X extends DatabaseModel, Y extends DatabaseModel> List<JointClasses.JointSext<T,
-                U, V, W, X, Y>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+                U, V, W, X, Y>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6) throws SQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
             ObjectMapper third = new ObjectMapper(clazz3);
@@ -221,15 +274,35 @@ public class AbstractQueryBuilder {
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<V> thirdTable = third.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<W> fourthTable = fourth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<X> fifthTable = fifth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<Y> sixthTable = sixth.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {
@@ -256,7 +329,7 @@ public class AbstractQueryBuilder {
             return jointSexts;
         }
 
-        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel, X extends DatabaseModel, Y extends DatabaseModel, Z extends DatabaseModel> List<JointClasses.JointSept<T, U, V, W, X, Y, Z>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6, Class<Z> clazz7) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+        public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel, X extends DatabaseModel, Y extends DatabaseModel, Z extends DatabaseModel> List<JointClasses.JointSept<T, U, V, W, X, Y, Z>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6, Class<Z> clazz7) throws SQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
             ObjectMapper third = new ObjectMapper(clazz3);
@@ -268,17 +341,41 @@ public class AbstractQueryBuilder {
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<V> thirdTable = third.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<W> fourthTable = fourth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<X> fifthTable = fifth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<Y> sixthTable = sixth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<Z> seventhTable = seventh.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {
@@ -309,7 +406,7 @@ public class AbstractQueryBuilder {
         }
 
         public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel, X extends DatabaseModel, Y extends DatabaseModel, Z extends DatabaseModel, A extends DatabaseModel> List<JointClasses.JointOct<T,
-                U, V, W, X, Y, Z, A>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6, Class<Z> clazz7, Class<A> clazz8) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+                U, V, W, X, Y, Z, A>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6, Class<Z> clazz7, Class<A> clazz8) throws SQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
             ObjectMapper third = new ObjectMapper(clazz3);
@@ -322,19 +419,47 @@ public class AbstractQueryBuilder {
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<V> thirdTable = third.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<W> fourthTable = fourth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<X> fifthTable = fifth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<Y> sixthTable = sixth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<Z> seventhTable = seventh.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<A> eighthTable = eighth.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {
@@ -368,7 +493,7 @@ public class AbstractQueryBuilder {
         }
 
         public <T extends DatabaseModel, U extends DatabaseModel, V extends DatabaseModel, W extends DatabaseModel, X extends DatabaseModel, Y extends DatabaseModel, Z extends DatabaseModel, A extends DatabaseModel, B extends DatabaseModel> List<JointClasses.JointNon<T,
-                U, V, W, X, Y, Z, A, B>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6, Class<Z> clazz7, Class<A> clazz8, Class<B> clazz9) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+                U, V, W, X, Y, Z, A, B>> unwrap(Class<T> clazz1, Class<U> clazz2, Class<V> clazz3, Class<W> clazz4, Class<X> clazz5, Class<Y> clazz6, Class<Z> clazz7, Class<A> clazz8, Class<B> clazz9) throws SQLException {
             ObjectMapper first = new ObjectMapper(clazz1);
             ObjectMapper second = new ObjectMapper(clazz2);
             ObjectMapper third = new ObjectMapper(clazz3);
@@ -382,21 +507,53 @@ public class AbstractQueryBuilder {
             ResultSet resultSet = execute();
 
             List<T> firstTable = first.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<U> secondTable = second.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<V> thirdTable = third.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<W> fourthTable = fourth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<X> fifthTable = fifth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<Y> sixthTable = sixth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<Z> seventhTable = seventh.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<A> eighthTable = eighth.map(resultSet);
-            resultSet.beforeFirst();
+            try {
+                resultSet.beforeFirst();
+            } catch (SQLException e) {
+                throw new FishSQLException(e);
+            }
             List<B> ninthTable = ninth.map(resultSet);
 
             if (firstTable.size() != secondTable.size()) {

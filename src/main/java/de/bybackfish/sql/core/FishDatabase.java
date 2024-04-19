@@ -23,15 +23,15 @@ public class FishDatabase {
         this.databaseAdapter = databaseAdapter;
     }
 
-    public void connect(DatabaseOptions databaseOptions) throws ClassNotFoundException, SQLException {
+    public void connect(DatabaseOptions databaseOptions) throws ClassNotFoundException, FishSQLException {
         databaseAdapter.connect(databaseOptions);
     }
 
-    public <T extends DatabaseModel> List<T> executeQuery(SelectQueryBuilder queryBuilder, Class<T> clazzs) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public <T extends DatabaseModel> List<T> executeQuery(SelectQueryBuilder queryBuilder, Class<T> clazzs) throws FishSQLException {
         return queryBuilder.build(this).unwrap(clazzs);
     }
 
-    public void executeUpdate(AbstractQueryBuilder queryBuilder) throws SQLException {
+    public void executeUpdate(AbstractQueryBuilder queryBuilder) throws FishSQLException {
         queryBuilder.build(this).executeUpdate();
     }
 
@@ -74,7 +74,7 @@ public class FishDatabase {
         return preparedStatement;
     }
 
-    public <T extends DatabaseModel> List<T> select(SelectQueryBuilder selectQueryBuilder, Class<T> clazz, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public <T extends DatabaseModel> List<T> select(SelectQueryBuilder selectQueryBuilder, Class<T> clazz, Object... params) throws FishSQLException {
         String tableName;
 
         try {
@@ -88,7 +88,7 @@ public class FishDatabase {
         return executeQuery(selectQueryBuilder, clazz);
     }
 
-    public <T extends DatabaseModel> T selectOne(SelectQueryBuilder selectQueryBuilder, Class<T> clazz, Object... params) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public <T extends DatabaseModel> T selectOne(SelectQueryBuilder selectQueryBuilder, Class<T> clazz, Object... params) throws FishSQLException {
         List<T> models = select(selectQueryBuilder, clazz, params);
         selectQueryBuilder.limit(1);
         if (models.isEmpty()) {

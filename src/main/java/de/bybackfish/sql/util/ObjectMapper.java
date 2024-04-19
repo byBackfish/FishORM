@@ -2,6 +2,7 @@ package de.bybackfish.sql.util;
 
 import de.bybackfish.sql.annotation.Default;
 import de.bybackfish.sql.core.DatabaseModel;
+import de.bybackfish.sql.core.FishSQLException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -36,48 +37,52 @@ public class ObjectMapper {
         return Number.class.isAssignableFrom(type) || NUMBER_REFLECTED_PRIMITIVES.contains(type);
     }
 
-    public <T> List<T> map(ResultSet resultSet) throws SQLException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+    public <T> List<T> map(ResultSet resultSet) throws FishSQLException {
         String tableName = getTableName(clazz);
         List<T> list = new ArrayList<>();
-        while (resultSet.next()) {
-            clazz.getDeclaredConstructor().setAccessible(true);
-            T obj = (T) clazz.getDeclaredConstructor().newInstance();
+        try {
+            while (resultSet.next()) {
+                clazz.getDeclaredConstructor().setAccessible(true);
+                T obj = (T) clazz.getDeclaredConstructor().newInstance();
 
-            for (Field field : clazz.getDeclaredFields()) {
-                field.setAccessible(true);
-                boolean isFieldOptional = field.getType().equals(Optional.class);
+                for (Field field : clazz.getDeclaredFields()) {
+                    field.setAccessible(true);
+                    boolean isFieldOptional = field.getType().equals(Optional.class);
 
-                String name = field.getName();
-                try {
-                    name = field.getAnnotation(de.bybackfish.sql.annotation.Field.class).value();
-                } catch (Exception ignored) {
-                }
-
-
-                Object value;
-                try {
-                    value = resultSet.getObject("{tableName}.{name}");
-                } catch (SQLException e) {
-                    value = resultSet.getObject(name);
-                }
-
-                if (isFieldOptional) {
-                    value = Optional.ofNullable(value);
-                }
-
-                if (value == null) {
+                    String name = field.getName();
                     try {
-                        Default defaultValue = field.getAnnotation(Default.class);
-                        value = getDefaultValue(field, defaultValue);
+                        name = field.getAnnotation(de.bybackfish.sql.annotation.Field.class).value();
                     } catch (Exception ignored) {
-                        value = getDefaultValue(field);
                     }
+
+
+                    Object value;
+                    try {
+                        value = resultSet.getObject("{tableName}.{name}");
+                    } catch (SQLException e) {
+                        value = resultSet.getObject(name);
+                    }
+
+                    if (isFieldOptional) {
+                        value = Optional.ofNullable(value);
+                    }
+
+                    if (value == null) {
+                        try {
+                            Default defaultValue = field.getAnnotation(Default.class);
+                            value = getDefaultValue(field, defaultValue);
+                        } catch (Exception ignored) {
+                            value = getDefaultValue(field);
+                        }
+                    }
+
+                    field.set(obj, value);
                 }
 
-                field.set(obj, value);
+                list.add(obj);
             }
-
-            list.add(obj);
+        } catch (Exception e) {
+            throw new FishSQLException(e);
         }
         return list;
     }
