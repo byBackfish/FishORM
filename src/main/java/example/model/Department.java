@@ -14,6 +14,6 @@ public class Department extends DatabaseModel {
     @PrimaryKey
     int id;
 
-    @Field("department_name")
-    String name;
+    @Field("name")
+    public String name;
 }

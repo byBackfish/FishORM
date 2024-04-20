@@ -35,7 +35,7 @@ public class Join {
         Employee employee = Employee.findOne(Employee.class, QueryBuilder.select("*")).get();
         Department department = employee.linkOne(Department.class);
 
-        System.out.println(department);
+        System.out.println(STR."\{employee.name} is in \{department.name}");
     }
 
 }

@@ -34,30 +34,36 @@ public class DatabaseModel {
     }
 
     public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz) throws FishSQLException {
+        return linkMany(clazz, QueryBuilder.select("*"));
+    }
+
+    public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz, SelectQueryBuilder queryBuilder) throws FishSQLException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
 
-        String thisName = getTableName(this.getClass());
         String targetName = getTableName(clazz);
 
         Map.Entry<java.lang.reflect.Field, ForeignKey> target = ReflectionUtils.getAnnotatedFields(this.getClass(), ForeignKey.class).entrySet()
                 .stream().filter(entry -> entry.getValue().targetTable().equals(targetName)).findFirst().orElseThrow(() -> new RuntimeException("No foreign key found"));
 
         String targetColumn = target.getValue().targetColumn();
-        String thisField = getFieldName(target.getKey());
+        Object value;
+        try {
+            value = target.getKey().get(this);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
 
-        WhereQueryBuilder whereQueryBuilder = getDistinctWhereClause();
+        queryBuilder.from(targetName);
+        queryBuilder.where(where -> where.and(STR."\{targetColumn} = ?",
+                value));
 
-
-        SelectQueryBuilder selectQueryBuilder = QueryBuilder.select("*").from(thisName).join(targetName, thisField, targetColumn);
-
-        if (whereQueryBuilder != null)
-            selectQueryBuilder.where(whereQueryBuilder);
-
-        return fishDatabase.executeQuery(selectQueryBuilder, clazz);
+        return fishDatabase.executeQuery(queryBuilder, clazz);
     }
 
     public <T extends DatabaseModel> T linkOne(Class<T> clazz) throws FishSQLException {
-        return linkMany(clazz).getFirst();
+        SelectQueryBuilder queryBuilder = QueryBuilder.select("*");
+        queryBuilder.limit(1);
+        return linkMany(clazz, queryBuilder).getFirst();
     }
 
     public void insert() throws FishSQLException {
