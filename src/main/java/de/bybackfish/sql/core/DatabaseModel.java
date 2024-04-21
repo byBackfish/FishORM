@@ -33,17 +33,19 @@ public class DatabaseModel {
         return findMany(clazz, QueryBuilder.select("*"));
     }
 
-    public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz) throws FishSQLException {
-        return linkMany(clazz, QueryBuilder.select("*"));
+    public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz, String fieldName) throws FishSQLException {
+        return linkMany(clazz, fieldName, QueryBuilder.select("*"));
     }
-
-    public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz, SelectQueryBuilder queryBuilder) throws FishSQLException {
+    public <T extends DatabaseModel> List<T> linkMany(Class<T> clazz, String fieldName, SelectQueryBuilder queryBuilder) throws FishSQLException {
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
 
         String targetName = getTableName(clazz);
 
-        Map.Entry<java.lang.reflect.Field, ForeignKey> target = ReflectionUtils.getAnnotatedFields(this.getClass(), ForeignKey.class).entrySet()
-                .stream().filter(entry -> entry.getValue().targetTable().equals(targetName)).findFirst().orElseThrow(() -> new RuntimeException("No foreign key found"));
+        Map.Entry<java.lang.reflect.Field, ForeignKey> target =
+                ReflectionUtils.getAnnotatedFields(this.getClass(), ForeignKey.class).entrySet()
+                .stream()
+                        .filter(entry -> entry.getKey().getName().equals(fieldName))
+                        .filter(entry -> entry.getValue().targetTable().equals(targetName)).findFirst().orElseThrow(() -> new RuntimeException("No foreign key found"));
 
         String targetColumn = target.getValue().targetColumn();
         Object value;
@@ -60,10 +62,10 @@ public class DatabaseModel {
         return fishDatabase.executeQuery(queryBuilder, clazz);
     }
 
-    public <T extends DatabaseModel> T linkOne(Class<T> clazz) throws FishSQLException {
+    public <T extends DatabaseModel> T linkOne(Class<T> clazz, String fieldName) throws FishSQLException {
         SelectQueryBuilder queryBuilder = QueryBuilder.select("*");
         queryBuilder.limit(1);
-        return linkMany(clazz, queryBuilder).getFirst();
+        return linkMany(clazz, fieldName, queryBuilder).getFirst();
     }
 
     public void insert() throws FishSQLException {

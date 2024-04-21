@@ -1,11 +1,11 @@
 package de.bybackfish.sql.util;
 
 import de.bybackfish.sql.annotation.Default;
+import de.bybackfish.sql.annotation.LazyLoaded;
 import de.bybackfish.sql.core.DatabaseModel;
 import de.bybackfish.sql.core.FishSQLException;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -37,7 +37,7 @@ public class ObjectMapper {
         return Number.class.isAssignableFrom(type) || NUMBER_REFLECTED_PRIMITIVES.contains(type);
     }
 
-    public <T> List<T> map(ResultSet resultSet) throws FishSQLException {
+    public <T extends DatabaseModel> List<T> map(ResultSet resultSet) throws FishSQLException {
         String tableName = getTableName(clazz);
         List<T> list = new ArrayList<>();
         try {
@@ -49,33 +49,81 @@ public class ObjectMapper {
                     field.setAccessible(true);
                     boolean isFieldOptional = field.getType().equals(Optional.class);
 
-                    String name = field.getName();
-                    try {
-                        name = field.getAnnotation(de.bybackfish.sql.annotation.Field.class).value();
-                    } catch (Exception ignored) {
-                    }
+                    boolean isList = field.getType().equals(List.class);
+                    boolean isFieldLazyLoaded = field.getType().equals(Lazy.class) && field.isAnnotationPresent(LazyLoaded.class);
 
+                    if(isList) {
+                        isFieldLazyLoaded = ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0].equals(Lazy.class);
+                    }
 
                     Object value;
-                    try {
-                        value = resultSet.getObject("{tableName}.{name}");
-                    } catch (SQLException e) {
-                        value = resultSet.getObject(name);
-                    }
 
-                    if (isFieldOptional) {
-                        value = Optional.ofNullable(value);
-                    }
+                    if(isFieldLazyLoaded) {
+                        Class<?> targetClass;
 
-                    if (value == null) {
-                        try {
-                            Default defaultValue = field.getAnnotation(Default.class);
-                            value = getDefaultValue(field, defaultValue);
-                        } catch (Exception ignored) {
-                            value = getDefaultValue(field);
+                        if(isList) {
+                            targetClass = (Class<?>) ((java.lang.reflect.ParameterizedType) ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]).getActualTypeArguments()[0];
+                        } else {
+                            targetClass = (Class<?>) ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
                         }
-                    }
 
+                        // must be ? extends DatabaseModel
+                        if(!DatabaseModel.class.isAssignableFrom(targetClass)) {
+                            throw new FishSQLException(STR."LazyLoaded field must be of type DatabaseModel. Received: \{targetClass.getName()}");
+                        }
+
+                        final Class<? extends DatabaseModel> targetClazz = (Class<? extends DatabaseModel>) targetClass;
+
+                        LazyLoaded lazyLoaded = ReflectionUtils.getAnnotationFromField(field, LazyLoaded.class);
+                        if(lazyLoaded == null) continue;
+
+                        String targetFieldName = lazyLoaded.value();
+
+                        if(isList) {
+                            value = Lazy.of(() -> {
+                                try {
+                                    return obj.linkMany(targetClazz, targetFieldName);
+                                } catch (FishSQLException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                        } else {
+                            value = Lazy.of(() -> {
+                                try {
+                                    return obj.linkOne(targetClazz, targetFieldName);
+                                } catch (FishSQLException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                        }
+                    } else {
+
+                        String name = field.getName();
+                        try {
+                            name = field.getAnnotation(de.bybackfish.sql.annotation.Field.class).value();
+                        } catch (Exception ignored) {
+                        }
+
+                        try {
+                            value = resultSet.getObject(STR."\{tableName}.\{name}");
+                        } catch (SQLException e) {
+                            value = resultSet.getObject(name);
+                        }
+
+                        if (isFieldOptional) {
+                            value = Optional.ofNullable(value);
+                        }
+
+                        if (value == null) {
+                            try {
+                                Default defaultValue = field.getAnnotation(Default.class);
+                                value = getDefaultValue(field, defaultValue);
+                            } catch (Exception ignored) {
+                                value = getDefaultValue(field);
+                            }
+                        }
+
+                    }
                     field.set(obj, value);
                 }
 

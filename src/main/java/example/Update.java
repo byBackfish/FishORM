@@ -11,7 +11,9 @@ import de.bybackfish.sql.query.WhereQueryBuilder;
 import example.model.Employee;
 
 import java.lang.reflect.InvocationTargetException;
+import java.security.KeyPair;
 import java.sql.SQLException;
+import java.util.Map;
 
 public class Update {
 
@@ -22,7 +24,7 @@ public class Update {
         fishDatabase.connect(new DatabaseOptions("localhost", 5432, "postgres", "prj1_user", "prj1_password"));
 
         SelectQueryBuilder selectQueryBuilder = QueryBuilder.select("*");
-        selectQueryBuilder.where( where ->
+        selectQueryBuilder.where(where ->
                 where.and("id = ?", 3)
         );
 
@@ -30,6 +32,7 @@ public class Update {
         * FishDatabase.SelectOptions selectOptions = new FishDatabase.SelectOptions("*")
         *        .withFilter(FishDatabase.FilterOptions.ById(5));
         */
+
 
         Employee.findOne(Employee.class, selectQueryBuilder).ifPresent(employee -> {
             employee.name = "John Doe";
