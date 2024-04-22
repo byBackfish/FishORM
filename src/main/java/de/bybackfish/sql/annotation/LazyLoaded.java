@@ -9,4 +9,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface LazyLoaded {
     String value();
+
+    String linkTable() default "";
+
 }

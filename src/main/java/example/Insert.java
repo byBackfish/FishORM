@@ -17,8 +17,6 @@ public class Insert {
 
         Employee employee = new Employee();
         employee.name = "Maik";
-        // employee.departmentId = 1;
-
         employee.insert();
     }
 

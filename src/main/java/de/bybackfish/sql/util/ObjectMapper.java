@@ -6,6 +6,8 @@ import de.bybackfish.sql.core.DatabaseModel;
 import de.bybackfish.sql.core.FishSQLException;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -49,19 +51,26 @@ public class ObjectMapper {
                     field.setAccessible(true);
                     boolean isFieldOptional = field.getType().equals(Optional.class);
 
-                    boolean isList = field.getType().equals(List.class);
                     boolean isFieldLazyLoaded = field.getType().equals(Lazy.class) && field.isAnnotationPresent(LazyLoaded.class);
+                    boolean isLazyList = isFieldLazyLoaded && isListGeneric(field);
 
-                    if(isList) {
-                        isFieldLazyLoaded = ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0].equals(Lazy.class);
-                    }
+                    /*
+                    System.out.println(
+                            STR."""
+                                    Field: \{field.getName()}
+                                    isList: \{isLazyList}
+                                    isFieldLazyLoaded: \{isFieldLazyLoaded}
+                                    --------------------------
+                                    """
+                    );
+                    */
 
                     Object value;
 
                     if(isFieldLazyLoaded) {
                         Class<?> targetClass;
 
-                        if(isList) {
+                        if(isLazyList) {
                             targetClass = (Class<?>) ((java.lang.reflect.ParameterizedType) ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]).getActualTypeArguments()[0];
                         } else {
                             targetClass = (Class<?>) ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
@@ -79,7 +88,7 @@ public class ObjectMapper {
 
                         String targetFieldName = lazyLoaded.value();
 
-                        if(isList) {
+                        if(isLazyList) {
                             value = Lazy.of(() -> {
                                 try {
                                     return obj.linkMany(targetClazz, targetFieldName);
@@ -137,7 +146,7 @@ public class ObjectMapper {
 
     Object getDefaultValue(Field field, Default defaultValue) {
         if (isNumber(field.getType())) {
-            return defaultValue.intValue();
+            return defaultValue.numberValue();
         } else if (field.getType().equals(Boolean.class)) {
             return defaultValue.booleanValue();
         } else if (field.getType().equals(String.class)) {
@@ -156,5 +165,26 @@ public class ObjectMapper {
         }
 
         return null;
+    }
+
+    public static boolean isListGeneric(Field field) {
+        Type fieldType = field.getGenericType();
+
+        if (fieldType instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) fieldType;
+            Type[] typeArguments = parameterizedType.getActualTypeArguments();
+
+            if (typeArguments.length > 0) {
+                Type firstTypeArgument = typeArguments[0];
+                if (firstTypeArgument instanceof ParameterizedType) {
+                    ParameterizedType innerParameterizedType = (ParameterizedType) firstTypeArgument;
+                    Type rawType = innerParameterizedType.getRawType();
+                    if (rawType instanceof Class && List.class.isAssignableFrom((Class<?>) rawType)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }
