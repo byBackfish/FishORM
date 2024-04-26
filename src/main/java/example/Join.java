@@ -10,9 +10,6 @@ import example.model.Department;
 import example.model.Employee;
 import example.model.EmployeeDepartmentLink;
 
-import java.lang.reflect.InvocationTargetException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,9 +18,6 @@ public class Join {
     public static void main() throws FishSQLException, ClassNotFoundException {
         DatabaseProvider.setup(new PostgresAdapter());
         FishDatabase fishDatabase = DatabaseProvider.getDatabase();
-
-        StringTemplate.Processor<String, RuntimeException> SQL = StringTemplate::interpolate;
-
 
         fishDatabase.connect(new DatabaseOptions("localhost", 5432, "postgres", "prj1_user", "prj1_password"));
 
@@ -52,6 +46,5 @@ public class Join {
         Department department = employee.linkOne(Department.class, "departmentId");
 
         System.out.println(STR."\{employee.name} is in \{department.name}");
-
         }
 }
