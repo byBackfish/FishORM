@@ -19,10 +19,14 @@ public class Insert {
         employee.name = "Test Employee";
         employee.departmentId = 1;
 
-        Employee employee1 = employee.insertAndReturnModel(Employee.class);
 
         System.out.println("Pre ID: " + employee.id);
-        System.out.println("Post ID: " + employee1.id);
+        employee.insertAndUpdateModel();
+        System.out.println("Post ID: " + employee.id);
+
+        // Or:
+        // Employee employee1 = employee.insertAndReturnModel(Employee.class);
+        // System.out.println("Post ID: " + employee1.id);
     }
 
 }
