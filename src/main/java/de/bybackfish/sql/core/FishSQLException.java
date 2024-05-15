@@ -15,4 +15,8 @@ public class FishSQLException extends SQLException {
     public FishSQLException(Exception e) {
         super(e);
     }
+
+    public FishSQLException(String message, Exception e) {
+        super(message, e);
+    }
 }

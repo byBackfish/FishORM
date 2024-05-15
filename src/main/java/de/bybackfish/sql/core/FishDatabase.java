@@ -4,7 +4,6 @@ import de.bybackfish.sql.annotation.Table;
 import de.bybackfish.sql.query.AbstractQueryBuilder;
 import de.bybackfish.sql.query.SelectQueryBuilder;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,7 +26,7 @@ public class FishDatabase {
         databaseAdapter.connect(databaseOptions);
     }
 
-    public <T extends DatabaseModel> List<T> executeQuery(SelectQueryBuilder queryBuilder, Class<T> clazzs) throws FishSQLException {
+    public <T extends DatabaseModel> List<T> executeQuery(AbstractQueryBuilder queryBuilder, Class<T> clazzs) throws FishSQLException {
         return queryBuilder.build(this).unwrap(clazzs);
     }
 
@@ -54,7 +53,7 @@ public class FishDatabase {
         debug("Parameters: {0}\n", Arrays.stream(params).map(Object::toString).collect(Collectors.joining(", ")));
 
 
-        if (requiredParams > params.length) {
+        if (requiredParams != params.length) {
             throw new SQLException("""
                     Not enough parameters for query:
                     SQL: %s

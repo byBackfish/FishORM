@@ -3,7 +3,6 @@ package de.bybackfish.sql.query;
 import de.bybackfish.sql.core.FishDatabase;
 import de.bybackfish.sql.core.FishSQLException;
 
-import java.sql.SQLException;
 import java.util.Map;
 
 public class InsertQueryBuilder extends AbstractQueryBuilder {
@@ -31,5 +30,10 @@ public class InsertQueryBuilder extends AbstractQueryBuilder {
         // then the values
         sql(STR."VALUES (\{values.values().stream().map(key -> "?").collect(java.util.stream.Collectors.joining(","))})", Integer.MAX_VALUE - 1, values.values().toArray());
         return super.build(fishDatabase);
+    }
+
+    public InsertQueryBuilder returning(String returningFields) {
+        sql(STR."RETURNING \{returningFields}", Integer.MIN_VALUE);
+        return this;
     }
 }
