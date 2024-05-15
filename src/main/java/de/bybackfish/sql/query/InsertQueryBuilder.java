@@ -28,7 +28,7 @@ public class InsertQueryBuilder extends AbstractQueryBuilder {
 
 
         // then the values
-        sql(STR."VALUES (\{values.values().stream().map(key -> "?").collect(java.util.stream.Collectors.joining(","))})", Integer.MAX_VALUE - 1, values.values().toArray());
+        sql(STR."VALUES (\{values.values().stream().map(_ -> "?").collect(java.util.stream.Collectors.joining(","))})", Integer.MAX_VALUE - 1, values.values().toArray());
         return super.build(fishDatabase);
     }
 

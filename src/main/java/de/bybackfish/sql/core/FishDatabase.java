@@ -10,6 +10,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -94,6 +97,45 @@ public class FishDatabase {
             return null;
         }
         return models.getFirst();
+    }
+
+    public void openTransaction(Callable<Boolean> callable, Consumer<Optional<Exception>> onFail) {
+        Connection connection = null;
+        try {
+            connection = databaseAdapter.getConnection();
+            connection.setAutoCommit(false);
+            if (callable.call()) {
+                connection.commit();
+            } else {
+                onFail.accept(Optional.empty());
+                connection.rollback();
+            }
+        } catch (Exception e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            onFail.accept(Optional.of(e));
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void openTransaction(Callable<Boolean> callable) {
+        openTransaction(callable, optionalException -> {
+            optionalException.ifPresent(exception -> {
+                try {
+                    throw new FishSQLException(exception);
+                } catch (FishSQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        });
     }
 
     private void log(Level level, String message, Object... params) {
