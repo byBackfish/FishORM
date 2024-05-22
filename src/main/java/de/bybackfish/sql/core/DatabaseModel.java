@@ -32,13 +32,12 @@ public class DatabaseModel {
         return Optional.of(models.getFirst());
     }
 
-    public static <T extends DatabaseModel> Optional<T> findExact(Class<T> clazz, T obj) throws FishSQLException {
+    public static <T extends DatabaseModel> Optional<T> findExact(T obj) throws FishSQLException {
         WhereQueryBuilder distinctWhereClause = getDistinctWhereClause(obj);
 
         SelectQueryBuilder selectQueryBuilder = QueryBuilder.select("*");
         selectQueryBuilder.where(distinctWhereClause);
-
-        return findOne(clazz, selectQueryBuilder);
+        return findOne((Class<T>) obj.getClass(), selectQueryBuilder);
     }
 
     public static <T extends DatabaseModel> List<T> all(Class<T> clazz) throws FishSQLException {
