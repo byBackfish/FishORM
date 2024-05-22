@@ -31,8 +31,6 @@ public class Insert {
         // Insert and return model
         // Employee newEmployee = employee.insertAndReturnModel(Employee.class);
 
-
-
     }
 
 }

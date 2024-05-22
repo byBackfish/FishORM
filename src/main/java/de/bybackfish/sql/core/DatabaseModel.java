@@ -32,6 +32,15 @@ public class DatabaseModel {
         return Optional.of(models.getFirst());
     }
 
+    public static <T extends DatabaseModel> Optional<T> findExact(Class<T> clazz, T obj) throws FishSQLException {
+        WhereQueryBuilder distinctWhereClause = getDistinctWhereClause(obj);
+
+        SelectQueryBuilder selectQueryBuilder = QueryBuilder.select("*");
+        selectQueryBuilder.where(distinctWhereClause);
+
+        return findOne(clazz, selectQueryBuilder);
+    }
+
     public static <T extends DatabaseModel> List<T> all(Class<T> clazz) throws FishSQLException {
         return findMany(clazz, QueryBuilder.select("*"));
     }
@@ -185,22 +194,31 @@ public class DatabaseModel {
     }
 
     protected Collection<java.lang.reflect.Field> getPrimaryKeyFields() {
-        return ReflectionUtils.getAnnotatedFields(this.getClass(), PrimaryKey.class).keySet();
+        return getPrimaryKeyFields(this);
+    }
+
+
+    protected static <T extends DatabaseModel> Collection<java.lang.reflect.Field> getPrimaryKeyFields(T obj) {
+        return ReflectionUtils.getAnnotatedFields(obj.getClass(), PrimaryKey.class).keySet();
     }
 
     protected WhereQueryBuilder getDistinctWhereClause() {
-        Collection<java.lang.reflect.Field> primaryKeyFields = getPrimaryKeyFields();
+        return getDistinctWhereClause(this);
+    }
+
+    protected static <T extends DatabaseModel> WhereQueryBuilder getDistinctWhereClause(T obj) {
+        Collection<java.lang.reflect.Field> primaryKeyFields = getPrimaryKeyFields(obj);
 
         WhereQueryBuilder whereQueryBuilder = new WhereQueryBuilder();
 
         if (primaryKeyFields.isEmpty()) {
-            for (java.lang.reflect.Field field : getClass().getDeclaredFields()) {
+            for (java.lang.reflect.Field field : obj.getClass().getDeclaredFields()) {
                 field.setAccessible(true);
 
                 String name = getFieldName(field);
                 Object value = null;
                 try {
-                    value = field.get(this);
+                    value = field.get(obj);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
@@ -208,12 +226,12 @@ public class DatabaseModel {
                 if (value == null) {
                     continue;
                 }
-                whereQueryBuilder.and(STR."\{getTableName(this.getClass())}.\{name} = ?", value);
+                whereQueryBuilder.and(STR."\{getTableName(obj.getClass())}.\{name} = ?", value);
             }
         } else {
             for (java.lang.reflect.Field field : primaryKeyFields) {
                 try {
-                    whereQueryBuilder.and(STR."\{getTableName(this.getClass())}.\{getFieldName(field)} = ?", field.get(this));
+                    whereQueryBuilder.and(STR."\{getTableName(obj.getClass())}.\{getFieldName(field)} = ?", field.get(obj));
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
