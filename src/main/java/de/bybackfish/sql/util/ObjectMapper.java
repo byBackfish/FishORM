@@ -39,6 +39,7 @@ public class ObjectMapper {
         return Number.class.isAssignableFrom(type) || NUMBER_REFLECTED_PRIMITIVES.contains(type);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends DatabaseModel> List<T> map(ResultSet resultSet) throws FishSQLException {
         String tableName = getTableName(clazz);
         List<T> list = new ArrayList<>();
@@ -67,28 +68,28 @@ public class ObjectMapper {
 
                     Object value;
 
-                    if(isFieldLazyLoaded) {
+                    if (isFieldLazyLoaded) {
                         Class<?> targetClass;
 
-                        if(isLazyList) {
+                        if (isLazyList) {
                             targetClass = (Class<?>) ((java.lang.reflect.ParameterizedType) ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]).getActualTypeArguments()[0];
                         } else {
                             targetClass = (Class<?>) ((java.lang.reflect.ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
                         }
 
                         // must be ? extends DatabaseModel
-                        if(!DatabaseModel.class.isAssignableFrom(targetClass)) {
+                        if (!DatabaseModel.class.isAssignableFrom(targetClass)) {
                             throw new FishSQLException(STR."LazyLoaded field must be of type DatabaseModel. Received: \{targetClass.getName()}");
                         }
 
                         final Class<? extends DatabaseModel> targetClazz = (Class<? extends DatabaseModel>) targetClass;
 
                         LazyLoaded lazyLoaded = ReflectionUtils.getAnnotationFromField(field, LazyLoaded.class);
-                        if(lazyLoaded == null) continue;
+                        if (lazyLoaded == null) continue;
 
                         String targetFieldName = lazyLoaded.value();
 
-                        if(isLazyList) {
+                        if (isLazyList) {
                             value = Lazy.of(() -> {
                                 try {
                                     return obj.linkMany(targetClazz, targetFieldName);
@@ -133,6 +134,13 @@ public class ObjectMapper {
                         }
 
                     }
+
+                    if (field.getType().isEnum() && value instanceof String string) {
+                        System.out.println("is enum");
+                        Class<Enum> enumClass = (Class<Enum>) field.getType();
+                        value = Enum.valueOf(enumClass, string);
+                    }
+
                     field.set(obj, value);
                 }
 

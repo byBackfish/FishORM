@@ -24,4 +24,14 @@ public class Employee extends DatabaseModel {
     // @LazyLoaded takes in the field of this class that has the @ForeignKey annotation.
     @LazyLoaded(value = "id")
     public Lazy<List<EmployeeDepartmentLink>> department;
+
+    @Field("type")
+    public EmployeeType type;
+
+    public enum EmployeeType {
+        ADMIN,
+        GUEST,
+        STAFF,
+        MANAGER
+    }
 }
