@@ -4,10 +4,7 @@ import de.bybackfish.sql.annotation.Table;
 import de.bybackfish.sql.query.AbstractQueryBuilder;
 import de.bybackfish.sql.query.SelectQueryBuilder;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -68,12 +65,20 @@ public class FishDatabase {
         Connection connection = databaseAdapter.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(STR."\{sql}", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         for (int i = 0; i < params.length; i++) {
-            preparedStatement.setObject(i + 1, params[i]);
+            addToStatement(preparedStatement, i, params[i]);
         }
 
         debug("Prepared Statement: {0}\n", preparedStatement.toString());
 
         return preparedStatement;
+    }
+
+    private void addToStatement(PreparedStatement preparedStatement, int index, Object input) throws SQLException {
+        if(input instanceof Enum<?>) {
+            preparedStatement.setObject(index+1, input, Types.OTHER);
+        } else {
+            preparedStatement.setObject(index+1, input);
+        }
     }
 
     public <T extends DatabaseModel> List<T> select(SelectQueryBuilder selectQueryBuilder, Class<T> clazz, Object... params) throws FishSQLException {

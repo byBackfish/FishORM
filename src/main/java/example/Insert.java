@@ -17,6 +17,7 @@ public class Insert {
 
         Employee employee = new Employee();
         employee.name = "Maik";
+        employee.type = Employee.EmployeeType.GUEST;
 
         System.out.println(STR."Id before Update Model: \{employee.id}"); // 0
 
