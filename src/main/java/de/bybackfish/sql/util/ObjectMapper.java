@@ -136,7 +136,6 @@ public class ObjectMapper {
                     }
 
                     if (field.getType().isEnum() && value instanceof String string) {
-                        System.out.println("is enum");
                         Class<Enum> enumClass = (Class<Enum>) field.getType();
                         value = Enum.valueOf(enumClass, string);
                     }
