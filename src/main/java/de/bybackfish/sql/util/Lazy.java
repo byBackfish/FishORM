@@ -7,6 +7,7 @@ public abstract class Lazy<T> {
 
     public abstract boolean isLoaded();
     abstract void load();
+    public abstract void reset();
 
     public static <T> Lazy<T> of(T defaultValue, Supplier<T> supplier) {
         return new Lazy<>() {
@@ -23,6 +24,12 @@ public abstract class Lazy<T> {
             public void load() {
                 value = supplier.get();
                 loaded = true;
+            }
+
+            @Override
+            public void reset() {
+                value = defaultValue;
+                loaded = false;
             }
 
             @Override
